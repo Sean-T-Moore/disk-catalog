@@ -1,7 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 #
 # catalog.py, version 1.3
 #   by John Wiegley <johnw@newartisans.com>
+#   mods by Sean Moore <sean.moore@physicstools.com>
 #
 # Depends on: Python (>= 2.5.1)
 #   Optional: p7zip, rar
@@ -1341,6 +1342,12 @@ def findVolumeByName(name):
 
     return None
 
+def listVolumes():
+    c = conn.cursor()
+    for row in c.execute("""SELECT "name" FROM "volumes" """):
+        print "%s" % row 
+
+
 ########################################################################
 
 parser = optparse.OptionParser()
@@ -1403,6 +1410,10 @@ try:
 
     initDatabase()
 
+    if not args:
+        print "must supply command of: name, path, drop, list or index"
+        sys.exit(1)
+
     command = args[0]
 
     def print_result(entry):
@@ -1429,6 +1440,22 @@ try:
         for path in args[1:]:
             findEntriesByPath(path, print_result)
 
+    elif command == "drop":
+        if len(args) == 2:
+            name = args[1]
+            vol = findVolumeByName(name)
+            if not vol:
+                print "could not find Volume"
+                sys.exit(1)
+            else:
+                vol.clearEntries()
+        else:
+            print "usage: catalog drop [NAME]"
+            sys.exit(1)
+
+    elif command == "list":
+        listVolumes()
+
     elif command == "index":
         if len(args) == 1:
             print "usage: catalog index <PATH> [NAME]"
@@ -1448,6 +1475,8 @@ try:
             vol.path = normpath(path)
 
         vol.scanEntries()
+    else:
+        print "command not recognized"
 
 finally:
     conn.close()
